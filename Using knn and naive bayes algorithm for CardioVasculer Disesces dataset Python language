@@ -1,0 +1,232 @@
+# import pandas as pd
+import matplotlib
+matplotlib.use('TkAgg')  # Add this line before importing pyplot
+import matplotlib.pyplot as plt
+import numpy as np
+import seaborn as sns  # Import seaborn for correlation plotting
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import confusion_matrix
+from sklearn.naive_bayes import GaussianNB
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.metrics import accuracy_score, precision_score, recall_score, roc_curve, auc, confusion_matrix
+
+# Load the CSV file
+df = pd.read_csv('cardio_train.csv', sep=';')
+
+df
+
+# Find missing values
+missing_values = df.isnull().sum()
+if missing_values.sum() > 0:
+    print("Dataset contains missing values.")
+    print("Missing Values:\n", missing_values)
+else:
+    print("No missing values found in the dataset.")
+
+# Check for duplicate values
+duplicates = df.duplicated()
+if duplicates.any():
+    print("Duplicate values found!")
+    print(df[duplicates])
+else:
+    print("No duplicate values found!")
+
+
+# Check for categorical columns
+categorical_cols = df.select_dtypes(include=['object']).columns
+if len(categorical_cols) == 0:
+    print("No categorical columns found in the dataset.")
+else:
+    print("Categorical Columns:", categorical_cols)
+
+# Compute class distribution
+class_distribution = df['cardio'].value_counts()
+
+# Plot the class distribution
+plt.figure(figsize=(6, 4))
+class_distribution.plot(kind='bar', color=['blue', 'red'])
+plt.title('Class Distribution')
+plt.xlabel('Cardio')
+plt.ylabel('Count')
+plt.xticks([0, 1], ['No', 'Yes'])
+plt.show()
+
+# Check if the dataset is balanced or imbalanced
+if abs(class_distribution[0] - class_distribution[1]) > 0.2 * (class_distribution[0] + class_distribution[1]):
+    print("The dataset is imbalanced.")
+else:
+    print("The dataset is balanced.")
+
+
+# Drop the 'id' column
+df = df.drop(['id'], axis=1)
+
+
+df
+
+# Update the 'age' column from days to years
+df['age'] = df['age'] / 365
+
+
+df
+
+# Preprocessing and feature selection
+X = df.drop(['cardio'], axis=1)  # Features
+y = df['cardio']  # Target variable
+
+
+df
+
+# Train-test split
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=1)
+
+
+df
+
+# Check correlation
+correlation_matrix = df.corr()
+plt.figure(figsize=(10, 8))
+sns.heatmap(correlation_matrix, annot=True, cmap='coolwarm', fmt=".2f")
+plt.title('Correlation Matrix')
+plt.show()
+
+
+nb_classifier = GaussianNB()
+nb_classifier.fit(X_train, y_train)
+nb_y_pred = nb_classifier.predict(X_test)
+
+nb_accuracy = accuracy_score(y_test, nb_y_pred)
+nb_precision = precision_score(y_test, nb_y_pred)
+nb_recall = recall_score(y_test, nb_y_pred)
+
+
+# Confusion matrix for Naive Bayes
+nb_cm = confusion_matrix(y_test, nb_y_pred)
+nb_cm_labels = ['No Cardio', 'Cardio']
+plt.figure(figsize=(6, 4))
+sns.heatmap(nb_cm, annot=True, cmap='Blues', fmt='d', xticklabels=nb_cm_labels, yticklabels=nb_cm_labels)
+plt.title('Confusion Matrix - Naive Bayes')
+plt.xlabel('Predicted label')
+plt.ylabel('True label')
+plt.show()
+
+# Model training and evaluation for K-Nearest Neighbors (KNN)
+knn_classifier.fit(X_train, y_train)
+knn_y_pred = knn_classifier.predict(X_test)
+
+knn_accuracy = accuracy_score(y_test, knn_y_pred)
+knn_precision = precision_score(y_test, knn_y_pred)
+knn_recall = recall_score(y_test, knn_y_pred)
+
+
+# Confusion matrix for KNN
+knn_cm = confusion_matrix(y_test, knn_y_pred)
+knn_cm_labels = ['No Cardio', 'Cardio']
+plt.figure(figsize=(6, 4))
+sns.heatmap(knn_cm, annot=True, cmap='Blues', fmt='d', xticklabels=knn_cm_labels, yticklabels=knn_cm_labels)
+plt.title('Confusion Matrix - KNN')
+plt.xlabel('Predicted label')
+plt.ylabel('True label')
+plt.show()
+
+# Naive Bayes ROC
+nb_y_scores = nb_classifier.predict_proba(X_test)[:, 1]
+nb_fpr, nb_tpr, _ = roc_curve(y_test, nb_y_scores)
+nb_auc = auc(nb_fpr, nb_tpr)
+plt.plot(nb_fpr, nb_tpr, label=f'Naive Bayes (AUC = {nb_auc:.2f})')
+
+knn_y_scores = knn_classifier.predict_proba(X_test)[:, 1]
+knn_fpr, knn_tpr, _ = roc_curve(y_test, knn_y_scores)
+knn_auc = auc(knn_fpr, knn_tpr)
+plt.plot(knn_fpr, knn_tpr, label=f'KNN (AUC = {knn_auc:.2f})')
+
+# Plotting the random guess line
+plt.plot([0, 1], [0, 1], linestyle='--', color='gray', label='Random Guess')
+
+plt.title('ROC Curves for Naive Bayes and KNN')
+plt.xlabel('False Positive Rate')
+plt.ylabel('True Positive Rate')
+plt.legend()
+plt.grid(True)
+plt.show()
+
+# Comparison of AUC scores
+print("AUC Comparison:")
+print(f"Naive Bayes AUC: {nb_auc:.2f}")
+print(f"KNN AUC: {knn_auc:.2f}")
+
+# Show message based on comparison
+if nb_auc > knn_auc:
+    print("Naive Bayes has a higher AUC.")
+elif knn_auc > nb_auc:
+    print("KNN has a higher AUC.")
+else:
+    print("Both classifiers have the same AUC.")
+
+nb_classifier = GaussianNB()
+nb_classifier.fit(X_train, y_train)
+nb_y_pred = nb_classifier.predict(X_test)
+
+nb_accuracy = accuracy_score(y_test, nb_y_pred)
+nb_precision = precision_score(y_test, nb_y_pred)
+nb_recall = recall_score(y_test, nb_y_pred)
+
+print("Naive Bayes Results:")
+print("Accuracy:", nb_accuracy)
+print("Precision:", nb_precision)
+print("Recall:", nb_recall)
+
+
+
+knn_classifier = KNeighborsClassifier()
+knn_classifier.fit(X_train, y_train)
+knn_y_pred = knn_classifier.predict(X_test)
+
+knn_accuracy = accuracy_score(y_test, knn_y_pred)
+knn_precision = precision_score(y_test, knn_y_pred)
+knn_recall = recall_score(y_test, knn_y_pred)
+
+print("\nK-Nearest Neighbors (KNN) Results:")
+print("Accuracy:", knn_accuracy)
+print("Precision:", knn_precision)
+print("Recall:", knn_recall)
+
+
+# Create bar plots for accuracy, precision, and recall
+metrics = ['Accuracy', 'Precision', 'Recall']
+nb_metrics = [nb_accuracy, nb_precision, nb_recall]
+knn_metrics = [knn_accuracy, knn_precision, knn_recall]
+
+fig, ax = plt.subplots(figsize=(10, 6))
+bar_width = 0.35
+index = np.arange(len(metrics))
+
+# Plot Naive Bayes results
+nb_bars = ax.bar(index, nb_metrics, bar_width, label='Naive Bayes')
+
+# Plot KNN results
+knn_bars = ax.bar(index + bar_width, knn_metrics, bar_width, label='KNN')
+# Determine which algorithm performs better
+if nb_accuracy > knn_accuracy:
+    print("Naive Bayes has a higher accuracy for predicting cardiovascular disease.")
+    print("This means that Naive Bayes is better at correctly classifying instances into their respective classes (cardio or non-cardio).")
+elif knn_accuracy > nb_accuracy:
+    print("K-Nearest Neighbors (KNN) has a higher accuracy for predicting cardiovascular disease.")
+    print("This means that KNN is better at correctly classifying instances into their respective classes (cardio or non-cardio).")
+else:
+    print("Both Naive Bayes and KNN have the same accuracy for predicting cardiovascular disease.")
+
+# Add labels, title, and legend
+ax.set_xlabel('Metrics')
+ax.set_ylabel('Scores')
+ax.set_title('Comparison of Naive Bayes and KNN')
+ax.set_xticks(index + bar_width / 2)
+ax.set_xticklabels(metrics)
+ax.legend()
+
+plt.tight_layout()
+plt.show()
+
+
+
+
